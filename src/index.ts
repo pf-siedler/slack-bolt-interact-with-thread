@@ -1,12 +1,12 @@
 import { App } from '@slack/bolt';
-// import { WebClient } from '@slack/web-api';
+import { WebClient } from '@slack/web-api';
 
 const app = new App({
     token: process.env.SLACK_BOT_TOKEN,
     signingSecret: process.env.SLACK_SIGNING_SECRET,
 });
 
-// const api = new WebClient(process.env.SLACK_OAUTH_TOKEN);
+const api = new WebClient(process.env.SLACK_OAUTH_TOKEN);
 
 app.event('app_mention', ({ say }) => {
     say({
@@ -19,6 +19,29 @@ app.event('app_mention', ({ say }) => {
             },
         ],
     });
+});
+
+app.message(async ({ message }) => {
+    if (message.thread_ts) {
+        console.log('スレッドが作られました');
+        const thread_messages = await api.channels.replies({
+            thread_ts: message.thread_ts,
+            channel: message.channel,
+        });
+        if (!thread_messages.ok) {
+            console.error('スレッドを取得できませんでした');
+            return void 0;
+        }
+
+        const attachments: any[] = (thread_messages.messages as any[])
+            .filter(s => s.subtype && s.subtype === 'bot_message')
+            .reduce(
+                (attachments, bot_message) =>
+                    attachments.concat(bot_message.attachments),
+                [],
+            );
+        console.log(attachments);
+    }
 });
 
 (async () => {
