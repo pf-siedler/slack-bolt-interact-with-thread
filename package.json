@@ -15,7 +15,6 @@
   },
   "dependencies": {
     "@slack/bolt": "^1.2.0",
-    "@slack/web-api": "^5.1.0",
     "uuid": "^3.3.3"
   },
   "scripts": {

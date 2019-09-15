@@ -1,5 +1,4 @@
-import { App } from '@slack/bolt';
-import { WebClient, LogLevel } from '@slack/web-api';
+import { App, LogLevel } from '@slack/bolt';
 import { v4 as uuid } from 'uuid';
 import { extractURL } from './lib';
 import { isNull } from 'util';
@@ -9,8 +8,6 @@ const app = new App({
     signingSecret: process.env.SLACK_SIGNING_SECRET,
     logLevel: LogLevel.DEBUG,
 });
-
-const api = new WebClient(process.env.SLACK_OAUTH_TOKEN);
 
 app.event('app_mention', ({ say }) => {
     say({
@@ -27,9 +24,10 @@ app.event('app_mention', ({ say }) => {
 app.message(async ({ message }) => {
     if (message.thread_ts) {
         console.log('Thread is created');
-        const thread_messages = await api.channels.replies({
+        const thread_messages = await app.client.channels.replies({
             thread_ts: message.thread_ts,
             channel: message.channel,
+            token: process.env.SLACK_OAUTH_TOKEN,
         });
         if (!thread_messages.ok) {
             console.error('thread messages are not found');
@@ -52,6 +50,12 @@ app.message(async ({ message }) => {
         }
         // E.g. request(apiEndpoint, cb);
         console.log(`call ${apiEndpoint}`);
+        await app.client.reactions.add({
+            token: process.env.SLACK_BOT_TOKEN,
+            name: 'ok_hand',
+            timestamp: message.ts,
+            channel: message.channel,
+        });
     }
 });
 
